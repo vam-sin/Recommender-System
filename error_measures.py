@@ -1,7 +1,7 @@
 import numpy as np
 
 def rmse(pred_M, actual_M):
-
+    # roor mean squared error
     error = 0.0
     for i in range(actual_M.shape[0]):
         for j in range(actual_M.shape[1]):
@@ -12,7 +12,7 @@ def rmse(pred_M, actual_M):
     return error
 
 def mae(pred_M, actual_M):
-
+    # mean absolute error
     error = 0.0
     for i in range(actual_M.shape[0]):
         for j in range(actual_M.shape[1]):

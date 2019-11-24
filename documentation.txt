@@ -1,0 +1,17 @@
+The modules and their respective functionailities are as follows:
+
+SVD.py
+function: eigen_decomp
+          parameters: multiplied matrix (either A*A.T or A.T*A)
+          returns: the eigen values and the eigen vectors
+function: svd
+          parameters: utility matrix.
+          returns: the three matrices U, Sigma and Vtranspose
+
+error_measures.py
+function: rmse
+          parameters: predicted matrix and the actual matrix
+          returns: the root mean squared error between the two matrices calculated elementwise
+function: mae
+          parameters: predicted matrix and the actual matrix
+          returns: the mean absolute error between the two matrices calculated elementwise
