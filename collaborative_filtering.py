@@ -58,6 +58,7 @@ def predict_rating_baseline(user, item, neighbours):
 	If baseline is True, the baseline value b is calculated as:
 		b = mu + bx + bi
 	where:
+		mu = global average
 		bx = (user_average - mu)
 		bi = (item_average - mu) (item -> movie)
 	'''
@@ -77,8 +78,10 @@ def predict_rating_baseline(user, item, neighbours):
 		value =  utility_matrix[neighbour][item] - (bi + user_average_ratings[neighbour])
 		numerator += cosine_similarities[user][neighbour] * value
 		denominator += cosine_similarities[user][neighbour]
-	print(numerator)
-	print(denominator)
+	assert(type(numerator) == np.float64)
+	assert(type(numerator) == type(denominator))
+	if denominator < 0.000001:
+		return 0
 	rating = numerator/denominator
 	rating += b
 	return rating
@@ -127,27 +130,31 @@ try:
 	with open('global_movie_average_rating.csv','r') as datafile:
 	    data_iter = csv.reader(datafile, delimiter = ',')
 	    data = [data for data in data_iter]
-	global_movie_average_rating = np.asarray(data, dtype = np.float32)[0]
+	global_movie_average_rating = np.asarray(data, dtype = np.float32)[0][0]
 
 	with open('movie_average_ratings.csv','r') as datafile:
 	    data_iter = csv.reader(datafile, delimiter = ',')
 	    data = [data for data in data_iter]
-	movie_average_ratings = np.asarray(data, dtype = np.float32)
+	movie_average_ratings = np.asarray(data, dtype = np.float32).flatten()
+	print(movie_average_ratings)
 
 	with open('normalized_utility_matrix.csv','r') as datafile:
 	    data_iter = csv.reader(datafile, delimiter = ',')
 	    data = [data for data in data_iter]
 	normalized_utility_matrix = np.asarray(data, dtype = np.float32)
+	print(normalized_utility_matrix)
 
 	with open('user_average_ratings.csv','r') as datafile:
 	    data_iter = csv.reader(datafile, delimiter = ',')
 	    data = [data for data in data_iter]
-	user_average_ratings = np.asarray(data, dtype = np.float32)
+	user_average_ratings = np.asarray(data, dtype = np.float32).flatten()
+	print(user_average_ratings)
 
 	with open('user_similarities.csv','r') as datafile:
 	    data_iter = csv.reader(datafile, delimiter = ',')
 	    data = [data for data in data_iter]
 	cosine_similarities = np.asarray(data, dtype = np.float32)
+	print(cosine_similarities)
 	del data_iter, data
 except FileNotFoundError:
 	print("user_similarities.csv is needed to run this file. Run preprocess.py to generate file.")
@@ -162,6 +169,7 @@ vanilla_time = time.process_time()
 
 print("Starting baseline filtering... Vanilla filtering took ", vanilla_time- read_time, " seconds")
 baseline_collaborative_filtering = create_prediction_matrix(utility_matrix, baseline = True)
+print(baseline_collaborative_filtering)
 baseline_time = time.process_time()
 
 print("Calculating RMSE")
@@ -185,8 +193,8 @@ print("\tMAE: ", mae_baseline_collaborative)
 print("\tPrediction time: ", baseline_time - vanilla_time)
 print("\tError calc time: ", baseline_error_time - vanilla_error_time)
 
-np.savetxt("vanilla_collaborative_filtering.csv", rmse_baseline_collaborative, fmt = "%5.5f", delimiter=",")
-np.savetxt("baseline_collaborative_filtering.csv", mae_baseline_collaborative, fmt = "%5.5f", delimiter=",")
+np.savetxt("vanilla_collaborative_filtering.csv", vanilla_collaborative_filtering, fmt = "%5.5f", delimiter=",")
+np.savetxt("baseline_collaborative_filtering.csv", baseline_collaborative_filtering, fmt = "%5.5f", delimiter=",")
 file_output_time = time.process_time()
 
 print("\n\n\t\tFILE INPUT TIME: ", read_time - start_time)
