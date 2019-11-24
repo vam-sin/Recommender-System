@@ -1,27 +1,9 @@
 # libraries
 import numpy as np
 from numpy.linalg import svd as actualsvd
-
-# tasks
-# s: Done
-# U
-# V
-
-def gso(E):
-    # gram-schmidt orthonormalization
-    Y = []
-    for i in E:
-        a = i
-        for j in Y:
-            i = np.squeeze(np.asarray(i))
-            j = np.squeeze(np.asarray(j))
-            a = a - (np.dot(j, i))*j
-        a = a/np.linalg.norm(a)
-
-        Y.append(a)
-    Y = np.asarray(Y)
-
-    return Y
+from error_measures import rmse, mae
+import pandas as pd
+import time
 
 def eigen_decomp(Amult):
     w, v = np.linalg.eig(Amult)
@@ -57,17 +39,21 @@ def svd(A, dim_red):
     # Both have same eigen values, use non zero ones to make s.
     # U
     eigen_u, U = eigen_decomp(np.dot(A, A.T))
-
+    print("SVD: Calculated U")
     # V
     eigen_v, V = eigen_decomp(np.dot(A.T, A))
     VT = V.T
+    print("SVD: Calculated VT")
 
     # Sigma
     s = np.diag([np.sqrt(i) for i in eigen_u])
+    print("SVD: Calculated s")
 
     if dim_red == 1.0:
         return U, s, VT
     else:
+        # Energy based.
+        # Ex: if 90% energy, choose Singular values such that their sum of squares is atleast 90% of the original sum of squares
         total_s = np.sum(s ** 0.5)
         for i in range(s.shape[0]):
             s_sum = np.sum(s[:i+1, :i+1])
@@ -78,64 +64,39 @@ def svd(A, dim_red):
 
                 return U, s, VT
 
-
-
-    # # print(w, v)
-    # inds = w.argsort()
-    # w = sorted(w)
-    # v = v[inds]
-    # # print(w, v)
-    # U = gso(v.T)
-    # # U = -1.0 * U
-    #
-    # # s
-    # sing_values = []
-    # for i in w:
-    #     if i>0.0:
-    #         sing_values.append(np.sqrt(i))
-    #
-    # sing_values = sorted(sing_values, reverse = True)
-    # s = np.zeros((A.shape[0], A.shape[1]))
-    # for i in range(len(sing_values)):
-    #     s[i][i] = sing_values[i]
-    #
-    # # V
-    # Amult = np.matmul(A.T, A)
-    # w, v = np.linalg.eig(Amult)
-    # # print(w, v)
-    # # print(v, w)
-    # # print(w, v)
-    # w_mod = sorted(w, reverse = True)
-    # # print(v, w_mod)
-    # vmod = []
-    # w = list(w)
-    # for i in w_mod:
-    #     vmod.append(v[w.index(i)])
-    # # print(v, vmod)
-    # vmod = np.asarray(vmod)
-    # # print(w_mod, vmod)
-    # VT = gso(vmod.T)
-
-    # return U, s, VT
-
-
-
 if __name__ == '__main__':
     # Utility Matrix
-    m = 4 # Number of users
-    n = 5 # Number of movies
-    # r is the rank of matrix A
-    A = np.random.randint(5, size=(m, n))   # Input data matrix
-    # A = np.array([[3, 2, 2], [2, 3, -2]])
+    A = pd.read_csv('normalized_utility_matrix.csv')
+    A = np.asarray(A)
+    print("Imported Matrix")
 
     # Decomposition
     # A matrix X is column orthonormal if X.T . X is I
-    # U is mXr (Left Singular Vectors) - Column Orthonormal
-    # Sigma is rXr diagonal matrix - positive values in descending order
-    # V is nXr (Right Singular Vectors) - Column Orthonormal
+    # U is mXr (Left Singular Vectors) - Column Orthonormal (Rows to concepts) - (Unit rotation matrices)
+    # Sigma is rXr diagonal matrix - positive values in descending order (strength of concepts) - (Stretch matrix)
+    # V is nXr (Right Singular Vectors) - Column Orthonormal (connects concepts to columns) - (Rotation matrix)
 
+    # Full SVD:
+    # U is a square matrix
+
+    # Singular Value Decomposition
+    print("Calculating SVD")
+    start = time.time()
     U, s, VT = svd(A, 1.0)
+    print("Time taken for SVD: ", time.time() - start)
     print("Calculated Shapes ", U.shape, s.shape, VT.shape)
     B = np.dot(U, (s.dot(VT)))
-    print("Calc: ", -B)
+    print("Calc: ", B)
     print(A)
+
+    # Calculating Error
+    rmse = rmse(B, A)
+    print("RMSE Value: ", rmse)
+
+    mae = mae(B, A)
+    print("MAE Value: ", mae)
+
+    # SVD results
+    # Time: 308.8444137573242, RMSE Value: 0.28308750006854566, MAE Value: 0.14049277643419675
+    # Reduced SVD results
+    # Time: 321.66628861427307, RMSE Value: 0.23311788798688335, MAE Value: 0.085797425129047
