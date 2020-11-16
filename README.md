@@ -32,6 +32,6 @@ python3 SVD.py
 
 To make recommendations using the Latent factor model, run the following command.
 
-``python3
+```python3
 python3 recommend_movie.py
 ```
